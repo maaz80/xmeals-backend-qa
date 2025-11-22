@@ -64,22 +64,22 @@ export const updateWalletBalance = async (req, res) => {
       }
     }
 
-    if (cancel) {
-      //check if order is already cancel or not
-      const { data: existingOrder, error: fetchError } = await supabase
-        .from("orders")
-        .select("status")
-        .eq("order_id", order_id)
-        .single();
+    // if (cancel) {
+    //   //check if order is already cancel or not
+    //   const { data: existingOrder, error: fetchError } = await supabase
+    //     .from("orders")
+    //     .select("status")
+    //     .eq("order_id", order_id)
+    //     .single();
 
-      if (fetchError) {
-        throw fetchError;
-      }
+    //   if (fetchError) {
+    //     throw fetchError;
+    //   }
 
-      if (existingOrder?.status === "cancelled") {
-        return res.status(400).json({ message: "Order is already cancelled" });
-      }
-    }
+    //   if (existingOrder?.status === "cancelled") {
+    //     return res.status(400).json({ message: "Order is already cancelled" });
+    //   }
+    // }
 
     if (review) {
       const { data, error } = await supabase
