@@ -19,33 +19,44 @@ const supabaseRealtime = createClient(
           },
      }
 );
+let channel;
 
 export function startOrderInsertListener() {
-     supabaseRealtime
-          .channel("orders-insert-channel")
+     if (channel) {
+          console.log("⚠️ Order listener already running");
+          return;
+     }
+
+     channel = supabaseRealtime
+          .channel("orders-status-placed-channel")
           .on(
                "postgres_changes",
                {
-                    event: "INSERT",
+                    event: "UPDATE",
                     schema: "public",
                     table: "orders",
                },
                async (payload) => {
-                    console.log("🟢 Order INSERT realtime:", payload.new);
+                    const oldStatus = payload.old?.status;
+                    const newStatus = payload.new?.status;
 
-                    // backend logic reuse
-                    await onOrderCreated(
-                         {
-                              body: {
-                                   order_id: payload.new.order_id,
-                                   v_id: payload.new.v_id,
-                                   user_order_id: payload.new.user_order_id,
+                    // ✅ Sirf jab status change ho ke "Placed" bane
+                    if (oldStatus !== "Placed" && newStatus === "Placed") {
+                         console.log("🟢 Order moved to PLACED:", payload.new.order_id);
+
+                         await onOrderCreated(
+                              {
+                                   body: {
+                                        order_id: payload.new.order_id,
+                                        v_id: payload.new.v_id,
+                                        user_order_id: payload.new.user_order_id,
+                                   },
                               },
-                         },
-                         {
-                              status: () => ({ json: () => { } }),
-                         }
-                    );
+                              {
+                                   status: () => ({ json: () => { } }),
+                              }
+                         );
+                    }
                }
           )
           .subscribe((status) => {
