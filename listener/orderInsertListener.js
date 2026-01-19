@@ -44,7 +44,7 @@ export function startOrderInsertListener() {
                     // ✅ Sirf jab status change ho ke "Placed" bane
                     if (oldStatus !== "Placed" 
                          && newStatus === "Placed"
-                         && waMessage !== null
+                         && waMessage === null
                     ) {
                          console.log("🟢 Order moved to PLACED:", payload.new.order_id);
 
