@@ -39,9 +39,13 @@ export function startOrderInsertListener() {
                async (payload) => {
                     const oldStatus = payload.old?.status;
                     const newStatus = payload.new?.status;
+                    const waMessage = payload.new?.wa_message_created_ts;
 
                     // ✅ Sirf jab status change ho ke "Placed" bane
-                    if (oldStatus !== "Placed" && newStatus === "Placed") {
+                    if (oldStatus !== "Placed" 
+                         && newStatus === "Placed"
+                         && waMessage !== null
+                    ) {
                          console.log("🟢 Order moved to PLACED:", payload.new.order_id);
 
                          await onOrderCreated(
