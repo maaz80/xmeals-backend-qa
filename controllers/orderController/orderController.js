@@ -60,7 +60,7 @@ export async function sendWhatsappTemplate({
                .from("orders")
                .update({
                     wa_message_id: json.messages[0].id,
-                    wa_message_created_ts: new Date()
+                    // wa_message_created_ts: new Date()
                })
                .eq("order_id", order_id);
           console.log(`✅ Stored message ID ${json.messages[0].id} for order ${order_id}`);

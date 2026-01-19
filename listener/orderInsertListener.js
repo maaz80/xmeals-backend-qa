@@ -37,17 +37,32 @@ export function startOrderInsertListener() {
                     table: "orders",
                },
                async (payload) => {
-                    const oldStatus = payload.old?.status;
-                    const newStatus = payload.new?.status;
-                    const waMessage = payload.new?.wa_message_created_ts;
 
                     // ✅ Sirf jab status change ho ke "Placed" bane
-                    if (oldStatus !== "Placed" 
-                         && newStatus === "Placed"
-                         && waMessage === null
+                    if (payload.new?.status === "Placed" &&
+                         payload.new?.wa_message_created_ts === null
                     ) {
-                         console.log("🟢 Order moved to PLACED:", payload.new.order_id);
+                         
+                         // 🔒 atomic lock
+                         const { data, error } = await supabaseRealtime
+                         .from("orders")
+                              .update({ wa_message_created_ts: new Date().toISOString() })
+                              .eq("order_id", payload.new.order_id)
+                              .is("wa_message_created_ts", null)
+                              .select("order_id");
 
+                         if (error) {
+                              console.error("DB lock error:", error);
+                              return;
+                         }
+                         
+                         if (!data || data.length === 0) {
+                              // already processed by another event
+                              return;
+                         }
+                         
+                         console.log("🟢 Order moved to PLACED:", payload.new.order_id);
+                         // ✅ NOW it is guaranteed single execution
                          await onOrderCreated(
                               {
                                    body: {
@@ -56,10 +71,10 @@ export function startOrderInsertListener() {
                                         user_order_id: payload.new.user_order_id,
                                    },
                               },
-                              {
-                                   status: () => ({ json: () => { } }),
-                              }
+                              { status: () => ({ json: () => { } }) }
                          );
+
+                         
                     }
                }
           )
